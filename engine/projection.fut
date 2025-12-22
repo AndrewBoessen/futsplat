@@ -45,9 +45,9 @@ def cam_view (v: view) ({x,y,z}: mean3) : mean3 =
 
 -- Project mean to 2D pixel coordinates
 def screen_proj ((W,H): (i64,i64)) (p: proj) ({x,y,z}: mean3) : mean2 =
-  let cam_view = [x,y,z,1]
-  let screen = la.matvecmul_row p cam_view
-  let ndc = {u = screen[0] / screen[3], v = screen[0] / screen[3]}
+  let cam_space = [x,y,z,1]
+  let screen = la.matvecmul_row p cam_space
+  let ndc = {u = screen[0] / screen[3], v = screen[1] / screen[3]}
   in ndc_to_pix ndc (W,H)
 
 -- Project from world to screen coordinates
