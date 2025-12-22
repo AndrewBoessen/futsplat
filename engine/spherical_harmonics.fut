@@ -77,6 +77,12 @@ def sh_to_color [L] ((x,y,z): (f32, f32, f32)) (dc_color: rgb) (coeffs: sh [L]) 
   in add_rgb res_b3 bias_rgb
 
 -- Procompute colors for n Gaussians
-def precompute_color [n] [L] (cam_quat: quat) (cam_trans: trans) (means3: [n]mean3) (rgbs: [n]rgb) (shs: [n]sh [L]) : [n] rgb =
+def precompute_color [n] [L]
+                     (cam_quat: quat)
+                     (cam_trans: trans)
+                     (means3: [n]mean3)
+                     (rgbs: [n]rgb)
+                     (shs: [n]sh [L])
+                     : [n] rgb =
   let c_pos = (quat_to_rot >-> campos) cam_quat cam_trans
-  in zip3 means3 rgbs shs |> map (\(m, c, s) -> ((c_pos |> cam_view) >-> sh_to_color) m c s)
+  in zip3 means3 rgbs shs |> map (\(m, c, s) -> ((cam_view c_pos) >-> sh_to_color) m c s)
