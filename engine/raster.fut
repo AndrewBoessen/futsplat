@@ -46,7 +46,7 @@ def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale)
   let con = ola.inv cov2D
   -- major and minor axis
   let (D,_) = ola.eig cov2D
-  let rad = (ola.matsqrt >-> (la.matscale 3.0)) D
+  let rad = (la.matunary f32.sqrt >-> la.matscale 3.0) D
   let maj = i64.f32(f32.ceil rad[0][0])
   let min = i64.f32(f32.ceil rad[1][1])
   -- rotation
