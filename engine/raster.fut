@@ -28,7 +28,7 @@ def jacobian ({fx,fy,cx,cy}: pinhole) ((fovx, fovy): (f32,f32)) ({x,y,z}: mean3)
 
 -- 3D Covariance matrix of gaussian (RS (RS)^T)
 def sigma3 (q: quat) ({x,y,z}: scale) : [3][3]f32 =
-  let s_diag = la.matvecmul_col (la.eye 3) [x,y,z]
+  let s_diag = la.todiag [x,y,z]
   let RS = (quat_to_rot >-> la.matmul) q s_diag
   in RS `la.matmul` transpose RS
 
@@ -42,7 +42,7 @@ def sigma2 (J: [2][3]f32) (v: view) (sigma: [3][3]f32) : [2][2]f32 =
 def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale) (xyz: mean3) : (conic, radius) =
   let cov2D = sigma3 q s |> (jacobian cam_params fovs >-> sigma2) xyz v
   -- add lambda for numerical stability
-  let cov2D = cov2D `la.matadd` la.eye 2 |> (la.matscale 0.3)
+  let cov2D = cov2D `la.matadd` la.todiag [0.3,0.3]
   let con = ola.inv cov2D
   -- major and minor axis
   let (D,_) = ola.eig cov2D
