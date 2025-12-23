@@ -9,6 +9,7 @@ type sh [L] = [(L + 1) * (L + 1) - 1]rgb
 -- Intermediate Values
 type mean2 = {u: f32, v: f32}
 type conic = {a: f32, b: f32, c: f32}
+type radius = {maj: i64, min: i64, sint: f32, cost: f32}
 
 -- Projection Matrices
 type view = [3][4]f32
