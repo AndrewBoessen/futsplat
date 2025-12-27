@@ -47,7 +47,7 @@ def sigma2 (J: [2][3]f32) (v: view) (sigma: [3][3]f32) : [2][2]f32 =
   in JW `la.matmul` sigma `la.matmul` transpose JW
 
 -- Compute conic and max radius in pixels
-def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale) (xyz: mean3) : (conic, i64) =
+def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale) (xyz: mean3) : (conic, f32) =
   let cov2D = sigma3 q s |> (jacobian cam_params fovs >-> sigma2) xyz v
   -- add lambda for numerical stability
   let cov2D = cov2D `la.matadd` la.todiag [0.3,0.3]
@@ -55,8 +55,26 @@ def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale)
   -- major and minor axis
   let (D,_) = ola.eig cov2D
   let rad = (la.matunary f32.sqrt >-> la.matscale 3.0) D
-  let max_radius = i64.f32(f32.ceil (f32.max rad[0][0] rad[1][1]))
+  let max_radius = f32.ceil (f32.max rad[0][0] rad[1][1])
   in ({a = con[0][0], b = con[0][1], c = con[1][1]}, max_radius)
+
+-- Precompute conic for n Gaussians
+def precompute_conic [n]
+                     (image_size: (i64,i64))
+                     (cam_params: pinhole)
+                     (cam_q: quat)
+                     (cam_t: trans)
+                     (quats: [n]quat)
+                     (scales: [n]scale)
+                     (xyzs: [n]mean3)
+                     : ([n]conic, [n]f32) =
+  let V = view_matrix (quat_to_rot cam_q) cam_t
+  let fovs = fov image_size cam_params
+
+  -- partial application of conic
+  let conic_p = conic cam_params fovs V
+
+  in map3 (\q s xyz -> conic_p q s xyz) quats scales xyzs |> unzip
 
 -- Get list of splats from Gaussians
 def get_splats [n] (grid_dim: (i64, i64)) (xyzs: [n]mean3) (uvs: [n]mean2) (radi: [n]f32) : []splat =
@@ -150,15 +168,7 @@ def preprocess [n] [L]
   let colors = precompute_color cam_q cam_t xyzs_f rgbs_f shs_f
 
   -- Compute conic
-  let fovs = fov image_size cam_params
-  let R = quat_to_rot cam_q
-  let V = view_matrix R cam_t
-
-  let (conics, radii_i64) = unzip (
-    map3 (\q s xyz -> conic cam_params fovs V q s xyz)
-         quats_f scales_f xyz_cs_f
-  )
-  let radii = map f32.i64 radii_i64
+  let (conics, radii) = precompute_conic image_size cam_params cam_q cam_t quats_f scales_f xyz_cs_f
  
   -- Generate and sort splats
   let splats = get_splats grid_dim xyz_cs_f uvs_f radii
