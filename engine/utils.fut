@@ -51,6 +51,10 @@ def sort_key (tid: i64) (z: f32) : u64 =
   let depth_part = u64.u32 (f32.to_bits z)
   in tile_part | depth_part
 
+-- Find the next highest bit of the MSB
+def get_higher_msb (n: u32) : i32 =
+  if n == 0 then 0 else 32 - (u32.clz n)
+
 -- Expands input array 'arr' based on a size function 'sz' and a generator 'get'
 def expand 'a 'b [n] (sz: a -> i64) (get: a -> i64 -> b) (arr: [n]a) : []b =
   let counts = map sz arr
