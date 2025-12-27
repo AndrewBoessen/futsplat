@@ -37,7 +37,7 @@ def jacobian ({fx,fy,cx = _, cy = _}: pinhole) ((fovx, fovy): (f32,f32)) ({x,y,z
 -- 3D Covariance matrix of gaussian (RS (RS)^T)
 def sigma3 (q: quat) ({x,y,z}: scale) : [3][3]f32 =
   let s_diag = la.todiag [x,y,z]
-  let RS = (quat_to_rot >-> la.matmul) q s_diag
+  let RS = q |> (norm_quat >-> quat_to_rot) `la.matmul` s_diag
   in RS `la.matmul` transpose RS
 
 -- 2D Covariance matrix of gaussian (JW Simga (JW)^T)
