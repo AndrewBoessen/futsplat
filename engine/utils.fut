@@ -30,16 +30,30 @@ def quat_to_rot ({w,x,y,z}: quat) : rot =
   ]
 
 -- Get outer bounding box lower and upper coordinates
-def rect ({u,v}: mean2) (radius: f32) ((grid_x, grid_y): (i64, i64)) : ((i64,i64),(i64,i64)) =
+def rect ((grid_x, grid_y): (i64, i64)) ({u,v}: mean2) (radius: f32) : ((i64,i64),(i64,i64)) =
   let rect_min =
     let min_x = i64.min grid_x (i64.max 0 (i64.f32(u - radius) // BLOCK_SIZE))
     let min_y = i64.min grid_y (i64.max 0 (i64.f32(v - radius) // BLOCK_SIZE))
     in (min_x, min_y)
   let rect_max =
     let max_x = i64.min grid_x (i64.max 0 ((i64.f32(u + radius) + BLOCK_SIZE - 1) // BLOCK_SIZE))
-    let max_y = i64.min grid_x (i64.max 0 ((i64.f32(u + radius) + BLOCK_SIZE - 1) // BLOCK_SIZE))
+    let max_y = i64.min grid_y (i64.max 0 ((i64.f32(v + radius) + BLOCK_SIZE - 1) // BLOCK_SIZE))
     in (max_x, max_y)
   in (rect_min, rect_max)
+
+-- Get tile range from bounding box
+def tile_range ((grid_x, _): (i64, i64)) (((min_x,min_y),(max_x,max_y)): ((i64,i64),(i64,i64))) : []i64 =
+  let w = max_x - min_x
+  let h = max_y - min_y
+
+  let count = if w > 0 && h > 0 then w * h else 0
+  in map (\i ->
+    let dy = i / w
+    let dx = i % w
+    let y = min_y + dy
+    let x = min_x + dx
+    in y * grid_x + x
+  ) (iota count)
 
 -- Sigmoid activation function
 def sigmoid (x: f32) : f32 =

@@ -6,7 +6,7 @@ import "utils"
 module la = mk_linalg f32
 
 -- Calculate FOV from camera parameters
-def fov ((W,H): (i64,i64)) ({fx,fy,cx,cy}: pinhole) : (f32, f32) =
+def fov ((W,H): (i64,i64)) ({fx,fy,cx = _,cy = _}: pinhole) : (f32, f32) =
   let fovx = 2 * f32.atan (f32.i64 W / (2 * fx))
   let fovy = 2 * f32.atan (f32.i64 H / (2 * fy))
   in (fovx, fovy)

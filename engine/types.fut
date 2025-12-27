@@ -9,7 +9,6 @@ type sh [L] = [(L + 1) * (L + 1) - 1]rgb
 -- Intermediate Values
 type mean2 = {u: f32, v: f32}
 type conic = {a: f32, b: f32, c: f32}
-type radius = {maj: i64, min: i64, sint: f32, cost: f32}
 
 -- Projection Matrices
 type view = [3][4]f32
@@ -24,7 +23,7 @@ type pinhole = {fx: f32, fy: f32, cx: f32, cy: f32}
 let BLOCK_SIZE: i64 = 16
 type image [m][n] = [m][n]f32
 type tile = [BLOCK_SIZE][BLOCK_SIZE]f32
-type splat = {tid: i64, z: f32, gid: i64}
+type splat = {tid: i64, key: u64, gid: i64}
 
 -- Spherical Harmonics Constants
 let SH_L0: f32 = 0.28209479177387814
