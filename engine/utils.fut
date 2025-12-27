@@ -36,12 +36,12 @@ def quat_to_rot ({w,x,y,z}: quat) : rot =
 -- Get outer bounding box lower and upper coordinates
 def rect ((grid_x, grid_y): (i64, i64)) ({u,v}: mean2) (radius: f32) : ((i64,i64),(i64,i64)) =
   let rect_min =
-    let min_x = i64.min grid_x (i64.max 0 (i64.f32(u - radius) // BLOCK_SIZE))
-    let min_y = i64.min grid_y (i64.max 0 (i64.f32(v - radius) // BLOCK_SIZE))
+    let min_x = i64.min grid_x (i64.max 0 (i64.f32(u - radius) // TILE_SIZE))
+    let min_y = i64.min grid_y (i64.max 0 (i64.f32(v - radius) // TILE_SIZE))
     in (min_x, min_y)
   let rect_max =
-    let max_x = i64.min grid_x (i64.max 0 ((i64.f32(u + radius) + BLOCK_SIZE - 1) // BLOCK_SIZE))
-    let max_y = i64.min grid_y (i64.max 0 ((i64.f32(v + radius) + BLOCK_SIZE - 1) // BLOCK_SIZE))
+    let max_x = i64.min grid_x (i64.max 0 ((i64.f32(u + radius) + TILE_SIZE - 1) // TILE_SIZE))
+    let max_y = i64.min grid_y (i64.max 0 ((i64.f32(v + radius) + TILE_SIZE - 1) // TILE_SIZE))
     in (max_x, max_y)
   in (rect_min, rect_max)
 

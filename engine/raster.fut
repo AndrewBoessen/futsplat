@@ -151,8 +151,8 @@ def preprocess [n] [L]
                : ([]gaussian, []splat, []i64) =
   let (W, H) = image_size
   -- Calculate grid dimensions
-  let grid_w = (W + BLOCK_SIZE - 1) / BLOCK_SIZE
-  let grid_h = (H + BLOCK_SIZE - 1) / BLOCK_SIZE
+  let grid_w = (W + TILE_SIZE - 1) / TILE_SIZE
+  let grid_h = (H + TILE_SIZE - 1) / TILE_SIZE
   let grid_dim = (grid_w, grid_h)
   let num_tiles = grid_w * grid_h
 

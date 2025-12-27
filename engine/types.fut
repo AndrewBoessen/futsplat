@@ -21,9 +21,9 @@ type trans = [3]f32
 type pinhole = {fx: f32, fy: f32, cx: f32, cy: f32}
 
 -- Image
-let BLOCK_SIZE: i64 = 16
+let TILE_SIZE: i64 = 16
 type image [m][n] = [m][n]f32
-type tile = [BLOCK_SIZE][BLOCK_SIZE]f32
+type tile = [TILE_SIZE][TILE_SIZE]f32
 type splat = {tid: i64, key: u64, gid: i64}
 
 -- Spherical Harmonics Constants
