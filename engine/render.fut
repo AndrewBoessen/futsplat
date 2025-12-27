@@ -177,3 +177,37 @@ def preprocess [n] [L]
   -- Create and package gaussians with splats
   let gaussians = map4 (\m c o r -> {m, c, o, r}) uvs_f conics opas_f colors
   in (gaussians, sorted_splats, ranges)
+
+-- Render the pixels for a single tile
+def raster_tile ((W, H): (i64, i64))
+                ((start_x, start_y): (i64, i64))
+                (gaussians: []gaussian)
+                : [TILE_SIZE][TILE_SIZE]rgb =
+  -- iterate over rows (y) within the tile
+  map (\ty ->
+    -- iterate over columns (x) within the tile
+    map (\tx ->
+      let x = start_x + tx
+      let y = start_y + ty
+      in if x < W && y < H then
+        -- iterate over Gaussians sequentially to accumulate color (Alpha Blending)
+        let (final_color, _) =
+          loop (C, T) = ({r=0.0, g=0.0, b=0.0}, 1.0f32) for {m, c, o, r} in gaussians do
+            -- break if saturated
+            if T < 0.0001 then
+              (C,T)
+            else
+              let dx = m.u - f32.i64 x
+              let dy = m.v - f32.i64 y
+
+              let g = f32.exp ((f32.neg 0.5) * (c.a * dx * dx + 2.0 * c.b * dx * dy + c.c * dy * dy))
+              let alpha = let a = f32.min 0.99 (o * g) in if a > (1.0/255.0) then a else 0.0
+              let weight = alpha * T
+
+              in (r |> (scale_rgb weight >-> add_rgb) C, T * (1.0 - alpha))
+        in final_color
+      else
+        -- background color for out-of-bounds pixels
+        {r=0.0, g=0.0, b=0.0}
+    ) (iota TILE_SIZE)
+  ) (iota TILE_SIZE)
