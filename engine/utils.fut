@@ -4,6 +4,10 @@ import "types"
 
 module la = mk_linalg f32
 
+-- Sigmoid activation function
+def sigmoid (x: f32) : f32 =
+  1.0 / (1.0 + f32.exp (f32.neg x))
+
 -- Convert NDC coordinates to pixel coordinates
 def ndc_to_pix ({u,v}: mean2) ((W,H): (i64, i64)) : mean2 =
   let u = ((u + 1.0) * f32.i64 W - 1.0) * 0.5
@@ -41,20 +45,24 @@ def rect ((grid_x, grid_y): (i64, i64)) ({u,v}: mean2) (radius: f32) : ((i64,i64
     in (max_x, max_y)
   in (rect_min, rect_max)
 
--- Get tile range from bounding box
-def tile_range ((grid_x, _): (i64, i64)) (((min_x,min_y),(max_x,max_y)): ((i64,i64),(i64,i64))) : []i64 =
-  let w = max_x - min_x
-  let h = max_y - min_y
+-- Create 64 bit key from tile id and depth
+def sort_key (tid: i64) (z: f32) : u64 =
+  let tile_part = (u64.i64 tid) << 32
+  let depth_part = u64.u32 (f32.to_bits z)
+  in tile_part | depth_part
 
-  let count = if w > 0 && h > 0 then w * h else 0
+-- Expands input array 'arr' based on a size function 'sz' and a generator 'get'
+def expand 'a 'b [n] (sz: a -> i64) (get: a -> i64 -> b) (arr: [n]a) : []b =
+  let counts = map sz arr
+  let offsets = scan (+) 0 counts
+  let total_len = if n > 0 then offsets[n-1] else 0
+
   in map (\i ->
-    let dy = i / w
-    let dx = i % w
-    let y = min_y + dy
-    let x = min_x + dx
-    in y * grid_x + x
-  ) (iota count)
-
--- Sigmoid activation function
-def sigmoid (x: f32) : f32 =
-  1.0 / (1.0 + f32.exp (f32.neg x))
+    let (g_idx, _) = 
+      loop (l, r) = (0, n - 1) while l < r do
+        let mid = r - (r - l) / 2
+        in if offsets[mid] <= i then (mid, r) else (l, mid - 1)
+    let start_idx = if g_idx == 0 then 0 else offsets[g_idx - 1]
+    let k = i - start_idx
+    in get arr[g_idx] k
+  ) (iota total_len)

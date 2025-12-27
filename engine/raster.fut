@@ -51,3 +51,23 @@ def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale)
   in ({a = con[0][0], b = con[0][1], c = con[1][1]}, max_radius)
 
 -- Get list of splats from Gaussians
+def get_splats [n] (grid_dim: (i64, i64)) (xyzs: [n]mean3) (uvs: [n]mean2) (radi: [n]f32) : []splat =
+  let inputs = zip4 (iota n) uvs radi xyzs
+
+  in expand
+    (\(_, uv, r, _) ->
+       let ((min_x, min_y), (max_x, max_y)) = rect grid_dim uv r
+       in i64.max 0 ((max_x - min_x) * (max_y - min_y))
+    )
+    (\(i, uv, r, xyz) k ->
+       let ((min_x, min_y), (max_x, _)) = rect grid_dim uv r
+       let width = max_x - min_x
+       -- Calculate the specific tile coordinates (x, y) from local index k
+       let width = if width == 0 then 1 else width
+       let ty = min_y + (k / width)
+       let tx = min_x + (k % width)
+       -- Calculate global Tile ID and Sort Key
+       let tid = ty * grid_dim.0 + tx
+       in {tid = tid, key = sort_key tid xyz.z, gid = i}
+    )
+    inputs

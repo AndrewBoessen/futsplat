@@ -85,4 +85,4 @@ def precompute_color [n] [L]
                      (shs: [n]sh [L])
                      : [n]rgb =
   let c_pos = (quat_to_rot >-> campos) cam_quat cam_trans
-  in zip3 means3 rgbs shs |> map (\(m, c, s) -> (cam_view c_pos >-> sh_to_color) m c s)
+  in map3 (\m c s -> (cam_view c_pos >-> sh_to_color) m c s) means3 rgbs shs
