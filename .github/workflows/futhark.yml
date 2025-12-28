@@ -30,6 +30,7 @@ jobs:
 
       # 3. Type-check all Futhark files in the engine directory
       - name: Check Futhark files
+        working-directory: engine
         run: |
           for file in *.fut; do
             if [ -f "$file" ]; then
