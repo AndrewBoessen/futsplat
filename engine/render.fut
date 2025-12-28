@@ -187,9 +187,12 @@ def preprocess [n] [L]
   in (gaussians, sorted_splats, ranges)
 
 -- Render the pixels for a single tile
-def raster_tile ((W, H): (i64, i64))
+def raster_tile [n] [m]
+                ((W, H): (i64, i64))
                 ((start_x, start_y): (i64, i64))
-                (gaussians: []gaussian)
+                (gaussians: [n]gaussian)
+                (splats: [m]splat)
+                (start: i64) (end: i64)
                 : [TILE_SIZE][TILE_SIZE]rgb =
   -- iterate over rows (y) within the tile
   map (\ty ->
@@ -198,13 +201,18 @@ def raster_tile ((W, H): (i64, i64))
       let x = start_x + tx
       let y = start_y + ty
       in if x < W && y < H then
-        -- iterate over Gaussians sequentially to accumulate color (Alpha Blending)
+        let count = end - start
+        -- iterate over range indices instead of an array
         let (final_color, _) =
-          loop (C, T) = ({r=0.0, g=0.0, b=0.0}, 1.0f32) for {m, c, o, r} in gaussians do
+          loop (C, T) = ({r=0.0, g=0.0, b=0.0}, 1.0f32) for i < count do
             -- break if saturated
-            if T < 0.0001 then
-              (C,T)
+            if T < 0.0001 then (C,T)
             else
+              -- Fetch data on demand
+              let splat_idx = start + i
+              let gid = splats[splat_idx].gid
+              let {m, c, o, r} = gaussians[gid]
+
               let dx = m.u - f32.i64 x
               let dy = m.v - f32.i64 y
 
@@ -215,7 +223,6 @@ def raster_tile ((W, H): (i64, i64))
               in (r |> (scale_rgb weight >-> add_rgb) C, T * (1.0 - alpha))
         in final_color
       else
-        -- background color for out-of-bounds pixels
         {r=0.0, g=0.0, b=0.0}
     ) (iota TILE_SIZE)
   ) (iota TILE_SIZE)
@@ -227,46 +234,27 @@ def raster_image (image_size: (i64, i64))
                  (ranges: []i64)
                  : [][]rgb =
   let (W, H) = image_size
-  -- Calculate grid dimensions
   let grid_w = (W + TILE_SIZE - 1) / TILE_SIZE
   let grid_h = (H + TILE_SIZE - 1) / TILE_SIZE
   let num_tiles = grid_w * grid_h
   let total_splats = length splats
 
-  -- Rasterize all tiles in parallel
-  -- [grid_h][grid_w][TILE_SIZE][TILE_SIZE]rgb
   let tiles =
     map (\ty ->
       map (\tx ->
         let tile_id = ty * grid_w + tx
-
         -- identify the range of splats belonging to this tile
         let start = ranges[tile_id]
         let end = if tile_id == num_tiles - 1
                   then total_splats
                   else ranges[tile_id + 1]
-        let count = end - start
-
-        -- gather the actual gaussian data for the splats in this tile
-        let tile_gaussians =
-          map (\i ->
-            let splat_idx = start + i
-            let gid = splats[splat_idx].gid
-            in gaussians[gid]
-          ) (iota count)
-
-        -- rasterize the specific tile
-        in raster_tile image_size (tx * TILE_SIZE, ty * TILE_SIZE) tile_gaussians
-
+        -- call raster_tile with indices directly
+        in raster_tile image_size (tx * TILE_SIZE, ty * TILE_SIZE) gaussians splats start end
       ) (iota grid_w)
     ) (iota grid_h)
 
-  -- Transpose to [grid_h][TILE_SIZE][grid_w][TILE_SIZE]
+  -- transpose and flatten
   let tiles_transposed = map transpose tiles
-
-  -- Flatten the dimensions in memory order to form the 2D grid
-  -- [grid_h * TILE_SIZE][grid_w * TILE_SIZE]
   let full_image = tiles_transposed |> flatten |> map flatten
 
-  -- Crop the padded result to the actual image size
   in full_image[:H, :W]
