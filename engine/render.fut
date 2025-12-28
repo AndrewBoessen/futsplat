@@ -270,3 +270,18 @@ def raster_image (image_size: (i64, i64))
 
   -- Crop the padded result to the actual image size
   in full_image[:H, :W]
+
+-- Render a single frame
+def render [n] [L]
+           (image_size: (i64,i64))
+           (cam_params: pinhole)
+           (cam_q: quat)
+           (cam_t: trans)
+           (xyzs: [n]mean3)
+           (opas: [n]opa)
+           (scales: [n]scale)
+           (quats: [n]quat)
+           (rgbs: [n]rgb)
+           (shs: [n]sh [L])
+           : [][]rgb =
+  preprocess image_size cam_params cam_q cam_t xyzs opas scales quats rgbs shs |> (\(g, s, r) -> raster_image image_size g s r)
