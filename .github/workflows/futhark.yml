@@ -25,7 +25,11 @@ jobs:
 
       # 3. Type-check all Futhark files in the engine directory
       - name: Check Futhark files
-        run: futhark check engine/*.fut
+        run: |
+          for file in engine/*.fut; do
+            echo "Checking $file..."
+            futhark check "$file"
+          done
 
       # 4. Run tests found in the engine directory
       - name: Run Futhark tests
