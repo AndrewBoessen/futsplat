@@ -1,2 +1,5 @@
 # futhark packages
 lib
+
+# futhark bins
+tests

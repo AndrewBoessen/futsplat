@@ -11,7 +11,7 @@ module ola = mk_ordered_linalg f32
 
 -- Check if gaussian is valid and in view
 def not_culled ((W,H): (i64,i64)) (pad: f32) (z_thresh: f32) ({u,v}: mean2) ({x = _, y = _, z}: mean3) : bool =
-  let in_frustum = (u >= (f32.neg pad) && u >= (f32.i64 W + pad)) && (v >= (f32.neg pad) && v <= (f32.i64 H + pad))
+  let in_frustum = (u >= (f32.neg pad) && u <= (f32.i64 W + pad)) && (v >= (f32.neg pad) && v <= (f32.i64 H + pad))
   let valid_z = z >= z_thresh
   in in_frustum && valid_z
 
@@ -49,14 +49,22 @@ def sigma2 (J: [2][3]f32) (v: view) (sigma: [3][3]f32) : [2][2]f32 =
 -- Compute conic and max radius in pixels
 def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale) (xyz: mean3) : (conic, f32) =
   let cov2D = sigma3 q s |> (jacobian cam_params fovs >-> sigma2) xyz v
+
   -- add lambda for numerical stability
   let cov2D = cov2D `la.matadd` la.todiag [0.3,0.3]
-  let con = ola.inv cov2D
-  -- major and minor axis
-  let (D,_) = ola.eig cov2D
-  let rad = (la.matunary f32.sqrt >-> la.matscale 3.0) D
-  let max_radius = f32.ceil (f32.max rad[0][0] rad[1][1])
-  in ({a = con[0][0], b = con[0][1], c = con[1][1]}, max_radius)
+  -- compute conic (inverse 2D covariance)
+  let det = cov2D[0][0] * cov2D[1][1] - cov2D[0][1] * cov2D[0][1]
+  let a = cov2D[1][1] / det
+  let b = f32.neg cov2D[0][1] / det
+  let c = cov2D[0][0] / det
+
+  -- major axis radius
+  let mid = 0.5 * (cov2D[0][0] + cov2D[1][1])
+  let lambda_term = f32.sqrt (f32.max 0.1 (mid * mid - det))
+  let max_lambda = mid + lambda_term
+  let max_radius = max_lambda |> (f32.sqrt >-> (*3) >-> f32.ceil)
+
+  in ({a,b,c}, max_radius)
 
 -- Precompute conic for n Gaussians
 def precompute_conic [n]

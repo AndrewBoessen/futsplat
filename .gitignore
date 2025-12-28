@@ -1,0 +1,8 @@
+
+# Futhark
+*.c
+*.h
+*.json
+*.actual
+*.expected
+*.bin
