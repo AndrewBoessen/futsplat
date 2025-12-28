@@ -1,3 +1,11 @@
+-- ==
+-- entry: render
+-- compiled input @ data/100k.in
+-- compiled input @ data/500k.in
+-- compiled input @ data/1000k.in
+-- compiled input @ data/1500k.in
+-- compiled input @ data/2000k.in
+
 import "engine/types"
 import "engine/render"
 

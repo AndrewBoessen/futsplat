@@ -1,4 +1,3 @@
-
 # Futhark
 *.c
 *.h
@@ -6,3 +5,8 @@
 *.actual
 *.expected
 *.bin
+*.wasm
+*.class.js
+gsplat
+
+data
