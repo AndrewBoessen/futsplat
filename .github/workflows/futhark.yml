@@ -23,12 +23,19 @@ jobs:
           (cd futhark-nightly-linux-x86_64/ && PREFIX=$HOME/.local make install)
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      # 3. Install Futhark packages
+      - name: Sync Futhark packages
+        working-directory: engine
+        run: futhark pkg sync
+
       # 3. Type-check all Futhark files in the engine directory
       - name: Check Futhark files
         run: |
-          for file in engine/*.fut; do
-            echo "Checking $file..."
-            futhark check "$file"
+          for file in *.fut; do
+            if [ -f "$file" ]; then
+              echo "Checking $file..."
+              futhark check "$file"
+            fi
           done
 
       # 4. Run tests found in the engine directory
