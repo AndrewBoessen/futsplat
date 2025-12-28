@@ -205,13 +205,16 @@ entry test_jacobian (fx: f32) (fy: f32) (fovx: f32) (fovy: f32) (x: f32) (y: f32
 --   1.0f32 0.0f32 0.0f32
 -- }
 -- output { 1.0f32 0.0f32 0.0f32 }
-entry test_raster_tile (W: i64) (H: i64) 
+entry test_raster_tile (W: i64) (H: i64)
                        (u: f32) (v: f32)
                        (ca: f32) (cb: f32) (cc: f32)
                        (opa: f32)
                        (r: f32) (g: f32) (b: f32) =
-  let g = {m = {u, v}, c = {a=ca, b=cb, c=cc}, o = opa, r = {r, g, b}}
-  let tile_pixels = render.raster_tile (W, H) (0, 0) [g]
+  let gaussian = {m = {u, v}, c = {a=ca, b=cb, c=cc}, o = opa, r = {r, g, b}}
+  -- Create a dummy splat pointing to the gaussian at index 0
+  let splat = {tid = 0i64, key = 0u64, gid = 0i64}
+  -- We pass range 0 to 1 because we have 1 splat
+  let tile_pixels = render.raster_tile (W, H) (0, 0) [gaussian] [splat] 0 1
   -- Check pixel at 0,0
   let p = tile_pixels[0][0]
   in (p.r, p.g, p.b)
