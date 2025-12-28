@@ -219,3 +219,54 @@ def raster_tile ((W, H): (i64, i64))
         {r=0.0, g=0.0, b=0.0}
     ) (iota TILE_SIZE)
   ) (iota TILE_SIZE)
+
+-- Render the entire image by splitting into tiles and combining the results
+def raster_image (image_size: (i64, i64))
+                 (gaussians: []gaussian)
+                 (splats: []splat)
+                 (ranges: []i64)
+                 : [][]rgb =
+  let (W, H) = image_size
+  -- Calculate grid dimensions
+  let grid_w = (W + TILE_SIZE - 1) / TILE_SIZE
+  let grid_h = (H + TILE_SIZE - 1) / TILE_SIZE
+  let num_tiles = grid_w * grid_h
+  let total_splats = length splats
+
+  -- Rasterize all tiles in parallel
+  -- [grid_h][grid_w][TILE_SIZE][TILE_SIZE]rgb
+  let tiles =
+    map (\ty ->
+      map (\tx ->
+        let tile_id = ty * grid_w + tx
+
+        -- identify the range of splats belonging to this tile
+        let start = ranges[tile_id]
+        let end = if tile_id == num_tiles - 1
+                  then total_splats
+                  else ranges[tile_id + 1]
+        let count = end - start
+
+        -- gather the actual gaussian data for the splats in this tile
+        let tile_gaussians =
+          map (\i ->
+            let splat_idx = start + i
+            let gid = splats[splat_idx].gid
+            in gaussians[gid]
+          ) (iota count)
+
+        -- rasterize the specific tile
+        in raster_tile image_size (tx * TILE_SIZE, ty * TILE_SIZE) tile_gaussians
+
+      ) (iota grid_w)
+    ) (iota grid_h)
+
+  -- Transpose to [grid_h][TILE_SIZE][grid_w][TILE_SIZE]
+  let tiles_transposed = map transpose tiles
+
+  -- Flatten the dimensions in memory order to form the 2D grid
+  -- [grid_h * TILE_SIZE][grid_w * TILE_SIZE]
+  let full_image = tiles_transposed |> flatten |> map flatten
+
+  -- Crop the padded result to the actual image size
+  in full_image[:H, :W]
