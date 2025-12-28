@@ -7,6 +7,9 @@
 *.bin
 *.wasm
 *.class.js
+*.mjs
+*.ispc
+*.o
 gsplat
 
 data
