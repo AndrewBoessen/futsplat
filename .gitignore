@@ -13,3 +13,8 @@
 gsplat
 
 data
+
+# Build
+.cache
+out
+*.ini

@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import os
 from futhark_data import dump
 
@@ -38,11 +39,11 @@ def generate_dataset(n_points, filename):
     xyz_z = z.flatten()[:n_points]
 
     # 3. Attributes (All arrays must be float32)
-    opas = np.ones(n_points, dtype=np.float32)
+    opas = np.zeros(n_points, dtype=np.float32)
 
-    s_x = np.full(n_points, 0.01, dtype=np.float32)
-    s_y = np.full(n_points, 0.01, dtype=np.float32)
-    s_z = np.full(n_points, 0.01, dtype=np.float32)
+    s_x = np.full(n_points, math.log(0.01), dtype=np.float32)
+    s_y = np.full(n_points, math.log(0.01), dtype=np.float32)
+    s_z = np.full(n_points, math.log(0.01), dtype=np.float32)
 
     rot_w = np.ones(n_points, dtype=np.float32)
     rot_x = np.zeros(n_points, dtype=np.float32)

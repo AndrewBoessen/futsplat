@@ -164,6 +164,10 @@ def preprocess [n] [L]
   let grid_dim = (grid_w, grid_h)
   let num_tiles = grid_w * grid_h
 
+  -- Apply activation to opacity and scale
+  let opas = map sigmoid opas
+  let scales = map (\s -> {x = f32.exp s.x, y = f32.exp s.y, z = f32.exp s.z}) scales
+
   -- Project to camera and screen space
   let (xyz_cs, uvs) = world_to_screen image_size (0.01, 100.0) cam_params cam_q cam_t xyzs
 
