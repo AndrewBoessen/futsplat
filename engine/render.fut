@@ -23,8 +23,8 @@ def cull_mask [n] (img_size: (i64,i64)) (pad: f32) (z_thresh: f32) (uvs: [n]mean
 def jacobian ({fx,fy,cx = _, cy = _}: pinhole) ((fovx, fovy): (f32,f32)) ({x,y,z}: mean3) : [2][3]f32 =
   let limx = 1.3 * f32.tan (fovx / 2)
   let limy = 1.3 * f32.tan (fovy / 2)
-  let txtz = x / y
-  let tytz = x / y
+  let txtz = x / z
+  let tytz = y / z
 
   let x = f32.min limx (f32.max (f32.neg limx) txtz) * z
   let y = f32.min limy (f32.max (f32.neg limy) tytz) * z

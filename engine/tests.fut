@@ -187,8 +187,8 @@ entry test_not_culled (W: i64) (H: i64) (pad: f32) (thresh: f32) (u: f32) (v: f3
 -- entry: test_jacobian
 -- input { 100.0f32 100.0f32 1.5707964f32 1.5707964f32 1.0f32 1.0f32 10.0f32 }
 -- output {
---    10.0f32 0.0f32 -10.0f32
---    0.0f32 10.0f32 -10.0f32
+--    10.0f32 0.0f32 -1.0f32
+--    0.0f32 10.0f32 -1.0f32
 -- }
 entry test_jacobian (fx: f32) (fy: f32) (fovx: f32) (fovy: f32) (x: f32) (y: f32) (z: f32) =
   let J = render.jacobian {fx, fy, cx=0.0, cy=0.0} (fovx, fovy) {x, y, z}
@@ -228,8 +228,8 @@ entry test_raster_tile (W: i64) (H: i64)
 --   1.0f32 1.0f32 1.0f32
 --   0.0f32 0.0f32 1.0f32
 -- }
--- output { 0.0001f32 0.0f32 0.0001f32 628.0f32 }
-entry test_conic (fx: f32) (fy: f32) (fovx: f32) (fovy: f32) 
+-- output { 0.0001f32 0.0f32 0.0001f32 301.0f32 }
+entry test_conic (fx: f32) (fy: f32) (fovx: f32) (fovy: f32)
                  (v00: f32) (v01: f32) (v02: f32) (v03: f32)
                  (v10: f32) (v11: f32) (v12: f32) (v13: f32)
                  (v20: f32) (v21: f32) (v22: f32) (v23: f32)
