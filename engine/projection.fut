@@ -13,11 +13,10 @@ def fov ((W,H): (i64,i64)) ({fx,fy,cx = _,cy = _}: pinhole) : (f32, f32) =
 
 -- Create view matrix from world to camera corrdinates
 def view_matrix (R: rot) (t: trans) : view =
-  let Rt = transpose R
-  in [
-    [Rt[0,0], Rt[0,1], Rt[0,2], t[0]],
-    [Rt[1,0], Rt[1,1], Rt[1,2], t[1]],
-    [Rt[2,0], Rt[2,1], Rt[2,2], t[2]],
+  [
+    [R[0,0], R[0,1], R[0,2], t[0]],
+    [R[1,0], R[1,1], R[1,2], t[1]],
+    [R[2,0], R[2,1], R[2,2], t[2]],
   ]
 
 -- Create projection matrix from camera to NDC pixel corrdinates

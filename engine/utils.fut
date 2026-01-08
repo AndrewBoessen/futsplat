@@ -10,8 +10,8 @@ def sigmoid (x: f32) : f32 =
 
 -- Convert NDC coordinates to pixel coordinates
 def ndc_to_pix ({u,v}: mean2) ((W,H): (i64, i64)) : mean2 =
-  let u = ((u + 1.0) * f32.i64 W - 1.0) * 0.5
-  let v = ((v + 1.0) * f32.i64 H - 1.0) * 0.5
+  let u = (u + 1.0) * f32.i64 W * 0.5
+  let v = (v + 1.0) * f32.i64 H * 0.5
   in {u,v}
 
 -- Normalize quaternion

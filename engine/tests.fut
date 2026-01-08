@@ -15,9 +15,9 @@ entry test_sigmoid (x: f32) = utils.sigmoid x
 
 -- ==
 -- entry: test_ndc_to_pix
--- input { 0.0f32 0.0f32 100i64 100i64 } output { 49.5f32 49.5f32 }
--- input { -1.0f32 -1.0f32 100i64 100i64 } output { -0.5f32 -0.5f32 }
--- input { 1.0f32 1.0f32 100i64 100i64 } output { 99.5f32 99.5f32 }
+-- input { 0.0f32 0.0f32 100i64 100i64 } output { 50.0f32 50.0f32 }
+-- input { -1.0f32 -1.0f32 100i64 100i64 } output { 0.0f32 0.0f32 }
+-- input { 1.0f32 1.0f32 100i64 100i64 } output { 100.0f32 100.0f32 }
 entry test_ndc_to_pix (u: f32) (v: f32) (W: i64) (H: i64) =
   let res = utils.ndc_to_pix {u, v} (W, H)
   in (res.u, res.v)
@@ -224,11 +224,11 @@ entry test_raster_tile (W: i64) (H: i64)
 -- input {
 --   100.0f32 100.0f32 1.5707964f32 1.5707964f32
 --   1.0f32 0.0f32 0.0f32 0.0f32 0.0f32 1.0f32 0.0f32 0.0f32 0.0f32 0.0f32 1.0f32 0.0f32
---   1.0f32 0.0f32 0.0f32 0.0f32
---   1.0f32 1.0f32 1.0f32
---   0.0f32 0.0f32 1.0f32
+--   0.70710678f32 0.0f32 0.0f32 0.70710678f32
+--   2.0f32 1.0f32 1.0f32
+--   1.0f32 1.0f32 5.0f32
 -- }
--- output { 0.0001f32 0.0f32 0.0001f32 301.0f32 }
+-- output { 0.002403f32 -0.000024f32 0.000619f32 121.0f32 }
 entry test_conic (fx: f32) (fy: f32) (fovx: f32) (fovy: f32)
                  (v00: f32) (v01: f32) (v02: f32) (v03: f32)
                  (v10: f32) (v11: f32) (v12: f32) (v13: f32)
@@ -245,3 +245,63 @@ entry test_conic (fx: f32) (fy: f32) (fovx: f32) (fovy: f32)
  
   let (c, rad) = render.conic cam_params fovs V q s xyz
   in (c.a, c.b, c.c, rad)
+
+-- ==
+-- entry: test_precompute_color
+-- input {
+--   1.0f32 0.0f32 0.0f32 0.0f32 0.0f32 1.0f32 5.0f32
+--   [0.0f32] [0.0f32] [0.0f32]
+--   [0.5f32] [0.5f32] [0.5f32]
+--   [[0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32]]
+--   [[0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32]]
+--   [[0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32]]
+-- }
+-- output { [0.640986f32] [0.640986f32] [0.640986f32] }
+entry test_precompute_color (qw: f32) (qx: f32) (qy: f32) (qz: f32) (tx: f32) (ty: f32) (tz: f32)
+                            (mx: []f32) (my: []f32) (mz: []f32)
+                            (cr: []f32) (cg: []f32) (cb: []f32)
+                            (shr: [][]f32) (shg: [][]f32) (shb: [][]f32) =
+  let cam_q = {w=qw, x=qx, y=qy, z=qz}
+  let cam_t = [tx, ty, tz]
+  let means = map3 (\x y z -> {x, y, z}) mx my mz
+  let rgbs = map3 (\r g b -> {r, g, b}) cr cg cb
+  let shs_raw = map3 (\sr sg sb -> map3 (\r g b -> {r,g,b}) sr sg sb) shr shg shb
+  let shs = shs_raw :> [1]sh [3]
+
+  let res = spherical_harmonics.precompute_color cam_q cam_t means rgbs shs
+  in (map (.r) res, map (.g) res, map (.b) res)
+
+-- ==
+-- entry: test_sort_splats
+-- input { 16i64 2i64 10.0f32 }
+-- output { [0i64, 2i64] [0i64, 1i64, 2i64] }
+entry test_sort_splats (num_tiles: i64) (gid: i64) (z: f32) =
+  -- Create two splats: one in tile 1 (closer), one in tile 0 (farther)
+  -- splat 0: tile 1, depth 1.0 (closer)
+  -- splat 1: tile 0, depth 10.0 (farther, defined by input z)
+  let k0 = utils.sort_key 1 1.0
+  let k1 = utils.sort_key 0 z
+  let splats = [{tid=1, key=k0, gid=gid}, {tid=0, key=k1, gid=0}]
+ 
+  let (sorted, ranges) = render.sort_splats num_tiles splats
+  -- Expected sort: tile 0 comes first (tid=0), then tile 1 (tid=1)
+  -- ranges should reflect counts.
+  -- If num_tiles=16, ranges[0] should be end of tile 0 (1), ranges[1] end of tile 1 (2).
+  -- returning gids to show order, and first few ranges
+  in (map (.gid) sorted, ranges[:3])
+
+-- ==
+-- entry: test_raster_image
+-- input { 16i64 16i64 }
+-- output { 1.0f32 0.0f32 0.0f32 }
+entry test_raster_image (W: i64) (H: i64) =
+  -- Setup a simple scene with 1 gaussian covering the top-left
+  let image_size = (W, H)
+  -- 2x2 grid since BLOCK is 16
+  let ranges = replicate (2*2) 0i64
+  let splats = [{tid=0, key=0u64, gid=0}]
+  let gaussians = [{m={u=0.0, v=0.0}, c={a=1.0, b=0.0, c=1.0}, o=1.0, r={r=1.0, g=0.0, b=0.0}}]
+
+  let image = render.raster_image image_size gaussians splats ranges
+  let p = image[0][0]
+  in (p.r, p.g, p.b)
