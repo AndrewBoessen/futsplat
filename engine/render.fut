@@ -224,7 +224,7 @@ def raster_tile [n] [m]
               let alpha = let a = f32.min 0.99 (o * g) in if a > (1.0/255.0) then a else 0.0
               let weight = alpha * T
 
-              in (r |> (scale_rgb weight >-> add_rgb) C, T * (1.0 - alpha))
+              in ((scale_rgb weight >-> add_rgb) r C, T * (1.0 - alpha))
         in final_color
       else
         {r=0.0, g=0.0, b=0.0}

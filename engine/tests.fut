@@ -201,10 +201,10 @@ entry test_jacobian (fx: f32) (fy: f32) (fovx: f32) (fovy: f32) (x: f32) (y: f32
 --   16i64 16i64
 --   0.0f32 0.0f32
 --   1.0f32 0.5f32 0.5f32
---   1.0f32
---   1.0f32 0.0f32 0.0f32
+--   0.5f32
+--   0.5f32 1.0f32 0.5f32
 -- }
--- output { 1.0f32 0.0f32 0.0f32 }
+-- output { 0.25f32 0.5f32 0.25f32 }
 entry test_raster_tile (W: i64) (H: i64)
                        (u: f32) (v: f32)
                        (ca: f32) (cb: f32) (cc: f32)
@@ -293,7 +293,7 @@ entry test_sort_splats (num_tiles: i64) (gid: i64) (z: f32) =
 -- ==
 -- entry: test_raster_image
 -- input { 16i64 16i64 }
--- output { 1.0f32 0.0f32 0.0f32 }
+-- output { 0.99f32 0.0f32 0.0f32 }
 entry test_raster_image (W: i64) (H: i64) =
   -- Setup a simple scene with 1 gaussian covering the top-left
   let image_size = (W, H)
