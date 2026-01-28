@@ -48,7 +48,7 @@ def sigma2 (J: [2][3]f32) (v: view) (sigma: [3][3]f32) : [2][2]f32 =
 
 -- Compute conic and max radius in pixels
 def conic (cam_params: pinhole) (fovs: (f32,f32)) (v: view) (q: quat) (s: scale) (xyz: mean3) : (conic, f32) =
-  let cov2D = sigma3 q s |> (jacobian cam_params fovs >-> sigma2) xyz v
+  let cov2D = sigma2 (jacobian cam_params fovs xyz) v (sigma3 q s)
 
   -- add lambda for numerical stability
   let cov2D = cov2D `la.matadd` la.todiag [0.3,0.3]
@@ -76,11 +76,11 @@ def precompute_conic [n]
                      (scales: [n]scale)
                      (xyzs: [n]mean3)
                      : ([n]conic, [n]f32) =
-  let V = view_matrix (quat_to_rot cam_q) cam_t
+  let v = (norm_quat >-> quat_to_rot >-> view_matrix) cam_q cam_t
   let fovs = fov image_size cam_params
 
   -- partial application of conic
-  let conic_p = conic cam_params fovs V
+  let conic_p = conic cam_params fovs v
 
   in map3 (\q s xyz -> conic_p q s xyz) quats scales xyzs |> unzip
 

@@ -40,7 +40,7 @@ struct Camera {
     float sy = sin(yaw * 0.00872665f);
     float cp = cos(pitch * 0.00872665f);
     float sp = sin(pitch * 0.00872665f);
-    return {cy * cp, 0, sy * cp, 0}; // Simplified look-at
+    return {cy * cp, cy * sp, sy * cp, -sy * sp};
   }
 };
 

@@ -58,7 +58,7 @@ def world_to_screen [n]
                     (cam_trans: trans)
                     (world: [n]mean3)
                     : ([n]mean3, [n]mean2) =
-  let v = (quat_to_rot >-> view_matrix) cam_quat cam_trans
+  let v = (norm_quat >-> quat_to_rot >-> view_matrix) cam_quat cam_trans
   let p = ((fov image_dim) >-> (proj_matrix z_thresh)) cam_params
   let cam_space = world |> map (cam_view v)
   let screen_space = cam_space |> map (screen_proj image_dim p)
