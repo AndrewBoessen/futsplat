@@ -64,8 +64,8 @@ def expand 'a 'b [n] (sz: a -> i64) (get: a -> i64 -> b) (arr: [n]a) : []b =
   in map (\i ->
     let (g_idx, _) = 
       loop (l, r) = (0, n - 1) while l < r do
-        let mid = r - (r - l) / 2
-        in if offsets[mid] <= i then (mid, r) else (l, mid - 1)
+        let mid = l + (r - l) / 2
+        in if offsets[mid] <= i then (mid + 1, r) else (l, mid)
     let start_idx = if g_idx == 0 then 0 else offsets[g_idx - 1]
     let k = i - start_idx
     in get arr[g_idx] k
