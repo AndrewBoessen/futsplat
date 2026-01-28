@@ -173,6 +173,55 @@ entry test_cam_view_proj (v00: f32) (v01: f32) (v02: f32) (v03: f32)
   let res = projection.cam_view V {x, y, z}
   in (res.x, res.y, res.z)
 
+-- ==
+-- entry: test_screen_proj
+-- input {
+--   100i64 100i64
+--   1.0f32 0.0f32 0.0f32 0.0f32
+--   0.0f32 1.0f32 0.0f32 0.0f32
+--   0.0f32 0.0f32 1.0f32 0.0f32
+--   0.0f32 0.0f32 0.0f32 1.0f32
+--   0.0f32 0.0f32 10.0f32
+-- }
+-- output { 50.0f32 50.0f32 }
+entry test_screen_proj (W: i64) (H: i64)
+                       (p00: f32) (p01: f32) (p02: f32) (p03: f32)
+                       (p10: f32) (p11: f32) (p12: f32) (p13: f32)
+                       (p20: f32) (p21: f32) (p22: f32) (p23: f32)
+                       (p30: f32) (p31: f32) (p32: f32) (p33: f32)
+                       (x: f32) (y: f32) (z: f32) =
+  let P = [[p00, p01, p02, p03],
+           [p10, p11, p12, p13],
+           [p20, p21, p22, p23],
+           [p30, p31, p32, p33]]
+  let res = projection.screen_proj (W, H) P {x, y, z}
+  in (res.u, res.v)
+
+-- ==
+-- entry: test_world_to_screen
+-- input {
+--   100i64 100i64 0.1f32 100.0f32 100.0f32 100.0f32
+--   1.0f32 0.0f32 0.0f32 0.0f32
+--   0.0f32 0.0f32 0.0f32
+--   [0.0f32] [0.0f32] [10.0f32]
+-- }
+-- output { [0.0f32] [0.0f32] [10.0f32] [50.0f32] [50.0f32] }
+entry test_world_to_screen (W: i64) (H: i64) (znear: f32) (zfar: f32) (fx: f32) (fy: f32)
+                           (qw: f32) (qx: f32) (qy: f32) (qz: f32)
+                           (tx: f32) (ty: f32) (tz: f32)
+                           (mx: []f32) (my: []f32) (mz: []f32) =
+  let dim = (W, H)
+  let thresh = (znear, zfar)
+  let cam = {fx, fy, cx=0.0, cy=0.0}
+  let q = {w=qw, x=qx, y=qy, z=qz}
+  let t = [tx, ty, tz]
+  let world = map3 (\x y z -> {x, y, z}) mx my mz
+
+  let (cam_space, screen_space) = projection.world_to_screen dim thresh cam q t world
+
+  in (map (.x) cam_space, map (.y) cam_space, map (.z) cam_space,
+      map (.u) screen_space, map (.v) screen_space)
+
 -- Render Tests
 
 -- ==
