@@ -206,10 +206,10 @@ public:
       h_cb[i] = readF(idx_cb);
 
       for (int j = 0; j < 15; ++j) {
-        // Map 0..14 -> R, 15..29 -> G, 30..44 -> B
-        h_shr[i * 15 + j] = readF(idx_rest[j]);
-        h_shg[i * 15 + j] = readF(idx_rest[j + 15]);
-        h_shb[i * 15 + j] = readF(idx_rest[j + 30]);
+        // Standard 3DGS PLY is interleaved: f_rest_0=R0, f_rest_1=G0, f_rest_2=B0, ...
+        h_shr[i * 15 + j] = readF(idx_rest[j * 3 + 0]);
+        h_shg[i * 15 + j] = readF(idx_rest[j * 3 + 1]);
+        h_shb[i * 15 + j] = readF(idx_rest[j * 3 + 2]);
       }
     }
 
