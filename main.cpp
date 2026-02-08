@@ -259,9 +259,30 @@ public:
 
     Quat rot = cam.getRotation();
 
-    int res = futhark_entry_render(ctx, &out_r, &out_g, &out_b, (int64_t)width, (int64_t)height, fx, fy, cx, cy, rot.w,
-                                   rot.x, rot.y, rot.z, cam.pos.x, cam.pos.y, cam.pos.z, xyz_x, xyz_y, xyz_z, opas, s_x,
-                                   s_y, s_z, rot_w, rot_x, rot_y, rot_z, c_r, c_g, c_b, sh_r, sh_g, sh_b);
+    // Convert Camera-to-World (Orientation) to World-to-Camera (View)
+    // q_w2c = conjugate(q_c2w)
+    Quat q_w2c = {rot.w, -rot.x, -rot.y, -rot.z};
+
+    // t_w2c = -R_w2c * pos_world
+    // Rotate -pos by q_w2c
+    float px = -cam.pos.x;
+    float py = -cam.pos.y;
+    float pz = -cam.pos.z;
+
+    // Rotate vector p by quaternion q: v' = q * p * q^-1
+    // Optimised formula for rotation: t = 2 * cross(q.xyz, v)
+    // v' = v + q.w * t + cross(q.xyz, t)
+    float tx = 2.0f * (q_w2c.y * pz - q_w2c.z * py);
+    float ty = 2.0f * (q_w2c.z * px - q_w2c.x * pz);
+    float tz = 2.0f * (q_w2c.x * py - q_w2c.y * px);
+
+    float rx = px + q_w2c.w * tx + (q_w2c.y * tz - q_w2c.z * ty);
+    float ry = py + q_w2c.w * ty + (q_w2c.z * tx - q_w2c.x * tz);
+    float rz = pz + q_w2c.w * tz + (q_w2c.x * ty - q_w2c.y * tx);
+
+    int res = futhark_entry_render(ctx, &out_r, &out_g, &out_b, (int64_t)width, (int64_t)height, fx, fy, cx, cy,
+                                   q_w2c.w, q_w2c.x, q_w2c.y, q_w2c.z, rx, ry, rz, xyz_x, xyz_y, xyz_z, opas, s_x, s_y,
+                                   s_z, rot_w, rot_x, rot_y, rot_z, c_r, c_g, c_b, sh_r, sh_g, sh_b);
 
     if (res != 0) {
       std::cerr << "Futhark Error: " << futhark_context_get_error(ctx) << std::endl;
@@ -422,7 +443,7 @@ int main(int argc, char **argv) {
       render_w = 1;
     if (render_h < 1)
       render_h = 1;
-    ImGui::Image((void *)(intptr_t)textureID, size, ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((void *)(intptr_t)textureID, size, ImVec2(0, 0), ImVec2(1, 1));
     ImGui::End();
 
     ImGui::Render();
