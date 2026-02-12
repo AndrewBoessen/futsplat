@@ -31,7 +31,7 @@ def jacobian ({fx,fy,cx = _, cy = _}: pinhole) ((fovx, fovy): (f32,f32)) ({x,y,z
 
   in [
     [fx / z, 0, f32.neg (fx * x) / (z * z)],
-    [0, fx / z, f32.neg (fy * y) / (z * z)]
+    [0, fy / z, f32.neg (fy * y) / (z * z)]
   ]
 
 -- 3D Covariance matrix of gaussian (RS (RS)^T)
