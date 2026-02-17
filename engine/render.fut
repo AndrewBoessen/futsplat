@@ -217,8 +217,8 @@ def raster_tile [n] [m]
               let gid = splats[splat_idx].gid
               let {m, c, o, r} = gaussians[gid]
 
-              let dx = m.u - f32.i64 x
-              let dy = m.v - f32.i64 y
+              let dx = m.u - (f32.i64 x + 0.5)
+              let dy = m.v - (f32.i64 y + 0.5)
 
               let g = f32.exp ((f32.neg 0.5) * (c.a * dx * dx + 2.0 * c.b * dx * dy + c.c * dy * dy))
               let alpha = let a = f32.min 0.99 (o * g) in if a > (1.0/255.0) then a else 0.0

@@ -26,8 +26,8 @@ def proj_matrix ((znear, zfar): (f32, f32)) ((fovx, fovy): (f32, f32)) : proj =
 
   let top = pixel_fy * znear
   let bot = f32.neg top
-  let left = pixel_fx * znear
-  let right = f32.neg left
+  let right = pixel_fx * znear
+  let left = f32.neg right
 
   in [
     [2.0 * znear / (right - left), 0, 0, 0],

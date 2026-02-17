@@ -15,9 +15,9 @@ entry test_sigmoid (x: f32) = utils.sigmoid x
 
 -- ==
 -- entry: test_ndc_to_pix
--- input { 0.0f32 0.0f32 100i64 100i64 } output { 50.0f32 50.0f32 }
--- input { -1.0f32 -1.0f32 100i64 100i64 } output { 0.0f32 0.0f32 }
--- input { 1.0f32 1.0f32 100i64 100i64 } output { 100.0f32 100.0f32 }
+-- input { 0.0f32 0.0f32 100i64 100i64 } output { 49.5f32 49.5f32 }
+-- input { -1.0f32 -1.0f32 100i64 100i64 } output { -0.5f32 -0.5f32 }
+-- input { 1.0f32 1.0f32 100i64 100i64 } output { 99.5f32 99.5f32 }
 entry test_ndc_to_pix (u: f32) (v: f32) (W: i64) (H: i64) =
   let res = utils.ndc_to_pix {u, v} (W, H)
   in (res.u, res.v)
@@ -144,7 +144,7 @@ entry test_view_matrix (r00: f32) (r01: f32) (r02: f32) (r10: f32) (r11: f32) (r
 -- entry: test_proj_matrix
 -- input { 1.0f32 100.0f32 1.5707964f32 1.5707964f32 }
 -- output {
---   -1.0000001f32 0.0f32 0.0f32 0.0f32
+--   1.0000001f32 0.0f32 0.0f32 0.0f32
 --   0.0f32 1.0000001f32 0.0f32 0.0f32
 --   0.0f32 0.0f32 1.010101f32 -1.0101011f32
 --   0.0f32 0.0f32 1.0f32 0.0f32
@@ -183,7 +183,7 @@ entry test_cam_view_proj (v00: f32) (v01: f32) (v02: f32) (v03: f32)
 --   0.0f32 0.0f32 0.0f32 1.0f32
 --   0.0f32 0.0f32 10.0f32
 -- }
--- output { 50.0f32 50.0f32 }
+-- output { 49.5f32 49.5f32 }
 entry test_screen_proj (W: i64) (H: i64)
                        (p00: f32) (p01: f32) (p02: f32) (p03: f32)
                        (p10: f32) (p11: f32) (p12: f32) (p13: f32)
@@ -205,7 +205,7 @@ entry test_screen_proj (W: i64) (H: i64)
 --   0.0f32 0.0f32 0.0f32
 --   [0.0f32] [0.0f32] [10.0f32]
 -- }
--- output { [0.0f32] [0.0f32] [10.0f32] [50.0f32] [50.0f32] }
+-- output { [0.0f32] [0.0f32] [10.0f32] [49.5f32] [49.5f32] }
 entry test_world_to_screen (W: i64) (H: i64) (znear: f32) (zfar: f32) (fx: f32) (fy: f32)
                            (qw: f32) (qx: f32) (qy: f32) (qz: f32)
                            (tx: f32) (ty: f32) (tz: f32)
@@ -253,7 +253,7 @@ entry test_jacobian (fx: f32) (fy: f32) (fovx: f32) (fovy: f32) (x: f32) (y: f32
 --   0.5f32
 --   0.5f32 1.0f32 0.5f32
 -- }
--- output { 0.25f32 0.5f32 0.25f32 }
+-- output { 0.1829039f32 0.3658078f32 0.1829039f32 }
 entry test_raster_tile (W: i64) (H: i64)
                        (u: f32) (v: f32)
                        (ca: f32) (cb: f32) (cc: f32)
@@ -342,7 +342,7 @@ entry test_sort_splats (num_tiles: i64) (gid: i64) (z: f32) =
 -- ==
 -- entry: test_raster_image
 -- input { 16i64 16i64 }
--- output { 0.99f32 0.0f32 0.0f32 }
+-- output { 0.7788008f32 0.0f32 0.0f32 }
 entry test_raster_image (W: i64) (H: i64) =
   -- Setup a simple scene with 1 gaussian covering the top-left
   let image_size = (W, H)
